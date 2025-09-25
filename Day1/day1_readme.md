@@ -91,30 +91,36 @@ endmodule
 ### Testbench: (mux_2_1_tb.v)
 
 ```verilog
-`timescale 1ns/1ps
-`include "mux_2_1.v"
+`timescale 1ns / 1ps
+module tb_good_mux;
+	// Inputs
+	reg i0,i1,sel;
+	// Outputs
+	wire y;
 
-module mux_2_1_tb;
-    reg a, b, sel;
-    wire y;
+        // Instantiate the Unit Under Test (UUT)
+	good_mux uut (
+		.sel(sel),
+		.i0(i0),
+		.i1(i1),
+		.y(y)
+	);
 
-    mux_2_1 M1(a, b, sel, y);
+	initial begin
+	$dumpfile("tb_good_mux.vcd");
+	$dumpvars(0,tb_good_mux);
+	// Initialize Inputs
+	sel = 0;
+	i0 = 0;
+	i1 = 0;
+	#300 $finish;
+	end
 
-    initial begin
-        $dumpfile("mux2_1.vcd");
-        $dumpvars(0, mux_2_1_tb);
-
-        a=0; b=0; sel=0; #10;
-        a=0; b=1; sel=0; #10;
-        a=1; b=0; sel=0; #10;
-        a=1; b=1; sel=0; #10;
-        a=0; b=0; sel=1; #10;
-        a=0; b=1; sel=1; #10;
-        a=1; b=0; sel=1; #10;
-        a=1; b=1; sel=1; #10;
-        $finish;
-    end
+always #75 sel = ~sel;
+always #10 i0 = ~i0;
+always #55 i1 = ~i1;
 endmodule
+
 ```
 
 ### How a 2:1 Mux Works
