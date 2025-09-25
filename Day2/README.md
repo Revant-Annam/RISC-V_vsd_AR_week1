@@ -67,17 +67,17 @@ Hierarchical synthesis preserves the modular structure of the design. The tool s
 #### Yosys Command Flow (Hierarchical)
 
 ```tcl
-# 1. Read the standard cell library
-read_liberty -lib <path_to_lib_file>
+yosys
 
-# 2. Read all Verilog design files
-read_verilog <top_module.v> <sub_module1.v>
+read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
-# 3. Run synthesis on the top-level module
-synth -top <top_module_name>
+read_verilog multiple_modules.v
 
-# 4. Map the synthesized logic to the library cells
-abc -liberty <path_to_lib_file>
+synth -top multiple_modules
+
+abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+write_verilog -noattr
 ```
 
 ### Flatten Synthesis
@@ -98,19 +98,19 @@ Flatten synthesis is an approach where the tool first collapses the entire desig
 
 ```tcl
 # 1. Read the standard cell library
-read_liberty -lib <path_to_lib_file>
+read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # 2. Read all Verilog design files
-read_verilog <top_module.v> <sub_module1.v>
+read_verilog multiple_modules.v
 
 # 3. Explicitly flatten the design hierarchy
 flatten
 
 # 4. Run synthesis on the now-flattened design
-synth -top <top_module_name>
+synth -top multiple_modules
 
 # 5. Map the synthesized logic to the library cells
-abc -liberty <path_to_lib_file>
+abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 ```
 
 ---
