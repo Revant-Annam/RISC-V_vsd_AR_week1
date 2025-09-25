@@ -127,13 +127,13 @@ endmodule
 
 A 2-to-1 multiplexer (mux) is a simple digital circuit that selects one of two data inputs and forwards it to a single output.
 
-- **Inputs**: It has two data inputs, `a` and `b`
+- **Inputs**: It has two data inputs, `i0` and `i1`
 - **Select Line**: A single control line, `sel`, determines which input is chosen
 - **Output**: A single output, `y`
 
 The logic is straightforward:
-- If `sel` is 0, the output `y` is equal to input `a`
-- If `sel` is 1, the output `y` is equal to input `b`
+- If `sel` is 0, the output `y` is equal to input `i0`
+- If `sel` is 1, the output `y` is equal to input `i1`
 
 ---
 
