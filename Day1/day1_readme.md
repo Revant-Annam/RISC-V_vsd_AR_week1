@@ -9,6 +9,7 @@ This document covers the fundamental tools and concepts for designing, simulatin
 3. [Verilog files used](#3-verilog-files-used)
 4. [Introduction to yosys and logic synthesis](#4-introduction-to-yosys-and-logic-synthesis)
 5. [Labs using yosys and sky130 PDK](#5-labs-using-yosys-and-sky130-pdk)
+6. [Results of both labs](#6-results-of-both-labs)
 
 ---
 
@@ -25,6 +26,8 @@ The Testbench is a separate Verilog module written specifically to verify the De
 - **Generate Stimulus**: Create and apply input signals to the Design's ports
 - **Observe Outputs**: Capture the Design's outputs to check if they are correct
 
+<img width="800" height="450" alt="tb_block_dig" src="https://github.com/user-attachments/assets/a15076c4-bd96-4571-a243-d309509eba80" />
+
 ### The Simulator ⚙️
 
 A simulator is a software tool used to execute the testbench and model the behavior of the design. It works on an **event-driven basis**. This means the simulator only performs calculations when it detects a change on an input signal. If there are no input changes, the outputs remain the same, which is a very efficient approach for simulating digital logic.
@@ -35,13 +38,15 @@ A simulator is a software tool used to execute the testbench and model the behav
 2. **Simulation**: iverilog compiles the code and runs the simulation, generating a Value Change Dump (.vcd) file that logs all signal activity
 3. **Viewing**: A waveform viewer like gtkwave opens the .vcd file to display the signals as graphical waveforms for analysis
 
+<img width="800" height="450" alt="iverilog_flow" src="https://github.com/user-attachments/assets/762e378d-dc47-48da-afe6-100860426be2" />
+
 ---
 
 ## 2. Labs using iverilog and gtkwave (2:1 Mux)
 
 ### Step 1: Lab Setup 📂
 
-First, clone the required workshop repository to get the necessary files. We will assume that iverilog and gtkwave were installed during the Week 0 setup.
+First, clone the required workshop repository to get the necessary files. The tools iverilog and gtkwave were installed during the Week 0 setup.
 
 ```bash
 git clone https://github.com/kunalg123/sky130RTLDesignAndSynthesisWorkshop.git
@@ -50,11 +55,11 @@ cd sky130RTLDesignAndSynthesisWorkshop/
 
 ### Step 2: Running Icarus Verilog Simulation 🚀
 
-Use the iverilog command to compile your Verilog design and testbench files. The `-o` flag specifies the output file name. Then, use the `vvp` command to run the compiled simulation, which generates the .vcd waveform file.
+Use the iverilog command to compile your Verilog design and testbench files. If design contains of multiple files then we have to mention all the files. The a.out file is generated. The './a.out' command is used to run the compiled simulation, which generates the .vcd waveform file.
 
 ```bash
-iverilog -o mux_2_1_tb mux_2_1.v mux_2_1_tb.v
-vvp mux_2_1_tb
+iverilog good_mux.v tb_good_mux.v
+./a.out
 ```
 
 ### Step 3: Viewing the Waveform in GTKWave 📉
@@ -62,20 +67,24 @@ vvp mux_2_1_tb
 Finally, use gtkwave to open the generated .vcd file and visualize the waveforms to verify the design's behavior.
 
 ```bash
-gtkwave mux2_1.vcd
+gtkwave tb_good_mux.vcd
 ```
 
 ---
 
 ## 3. Verilog Files Used
 
-### Design: 2-to-1 Multiplexer (mux_2_1.v)
+### Design: 2-to-1 Multiplexer (good_mux.v)
 
 ```verilog
-module mux_2_1(a, b, sel, y);
-    input a, b, sel;
-    output y;
-    assign y = sel ? b : a;
+module good_mux (input i0, input i1, input sel, output reg y);
+always @ (*)
+begin
+    if(sel)
+        y <= i1;
+    else 
+        y <= i0;
+end
 endmodule
 ```
 
