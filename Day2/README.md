@@ -77,7 +77,7 @@ synth -top multiple_modules
 
 abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
-write_verilog -noattr
+write_verilog -noattr multiple_modules_hier_netlist.v
 ```
 
 ### Flatten Synthesis
@@ -97,20 +97,17 @@ Flatten synthesis is an approach where the tool first collapses the entire desig
 #### Yosys Command Flow (Flatten)
 
 ```tcl
-# 1. Read the standard cell library
 read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
-# 2. Read all Verilog design files
 read_verilog multiple_modules.v
 
-# 3. Explicitly flatten the design hierarchy
 flatten
 
-# 4. Run synthesis on the now-flattened design
 synth -top multiple_modules
 
-# 5. Map the synthesized logic to the library cells
 abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+write_verilog -noattr multiple_modules_flat_netlist.v
 ```
 
 ---
@@ -124,11 +121,12 @@ Flip-flops are essential for synchronizing digital logic, and set/reset signals 
 An asynchronous reset changes the flop's state **immediately**, independent of the clock.
 
 ```verilog
-always @(posedge clk or posedge reset) begin
-    if (reset)
-        q <= 1'b0;  // Reset takes immediate effect
-    else
-        q <= d;     // Normal operation
+always @ (posedge clk , posedge async_reset)
+begin
+	if(async_reset)
+		q <= 1'b0;
+	else	
+		q <= d;
 end
 ```
 
@@ -142,11 +140,12 @@ end
 A synchronous reset only affects the flop on the **next active clock edge**.
 
 ```verilog
-always @(posedge clk) begin
-    if (reset)
-        q <= 1'b0;  // Reset only on clock edge
-    else
-        q <= d;     // Normal operation
+always @ (posedge clk )
+begin
+	if (sync_reset)
+		q <= 1'b0;
+	else	
+		q <= d;
 end
 ```
 
@@ -160,7 +159,8 @@ end
 An asynchronous set forces the flop's output to '1' **immediately**, regardless of the clock.
 
 ```verilog
-always @(posedge clk or posedge set) begin
+always @(posedge clk or posedge set)
+begin
     if (set)
         q <= 1'b1;  // Set takes immediate effect
     else
@@ -173,11 +173,12 @@ end
 A synchronous set forces the flop's output to '1' only on the **next active clock edge**.
 
 ```verilog
-always @(posedge clk) begin
-    if (set)
-        q <= 1'b1;  // Set only on clock edge
-    else
-        q <= d;     // Normal operation
+always @ (posedge clk , posedge async_set)
+begin
+	if(async_set)
+		q <= 1'b1;
+	else	
+		q <= d;
 end
 ```
 
@@ -186,22 +187,16 @@ end
 The following sequence of commands is used to synthesize any of the flip-flop designs, map them to the library cells, and view the result.
 
 ```tcl
-# 1. Read the standard cell library
 yosys> read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
-# 2. Read the specific DFF Verilog file (e.g., async reset version)
 yosys> read_verilog dff_asyncres.v
 
-# 3. Synthesize the design
 yosys> synth -top dff_asyncres
 
-# 4. Map generic DFFs to library DFFs
 yosys> dfflibmap -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
-# 5. Map combinational logic to library cells
 yosys> abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
-# 6. Visualize the final synthesized circuit
 yosys> show
 ```
 
