@@ -120,7 +120,6 @@ always #75 sel = ~sel;
 always #10 i0 = ~i0;
 always #55 i1 = ~i1;
 endmodule
-
 ```
 
 ### How a 2:1 Mux Works
@@ -145,13 +144,20 @@ The logic is straightforward:
 
 **Yosys** is a powerful, open-source synthesis tool that we use to perform this automated conversion. It takes our design and constraints and maps them to a library of standard cells.
 
+### Yosys setup
+<img width="800" height="450" alt="Screenshot (299)" src="https://github.com/user-attachments/assets/bab33456-9d32-4c0e-96d6-b53e8e1e13b5" />
+
+
 ### Verification of Synthesis
 
 After synthesis, it's crucial to verify that the synthesized netlist behaves identically to the original RTL code. This is typically done by running the same testbench on both the RTL design and the synthesized netlist.
 
+<img width="800" height="450" alt="Screenshot (298)" src="https://github.com/user-attachments/assets/9ea9beb2-fe0d-4726-ac56-af6183947aa3" />
+
+
 ### Logic Synthesis and Standard Cell Libraries 📚
 
-The synthesis tool needs a "menu" of available components to build the circuit. This is provided by a technology library file.
+The synthesis tool needs a menu of available components to build the circuit. This is provided by a technology library file.
 
 #### What is a .lib file?
 
@@ -165,7 +171,7 @@ The `.lib` file (a Liberty file) is a standard cell library provided by the foun
 
 The `.lib` file contains multiple versions of the same logic gate (e.g., a fast AND gate and a slow AND gate) to help the synthesis tool meet timing constraints. This is crucial for fixing timing violations found during setup and hold analysis:
 
-- **Setup Analysis**: Checks if data is stable before the clock edge arrives at a flip-flop. A setup violation occurs if the data path is too slow
+- **Setup Analysis**: Checks if data is stable before the clock edge arrives at a flip-flop. A setup violation occurs if the data path has higher delay
 - **Hold Analysis**: Checks if data remains stable after the clock edge has passed. A hold violation occurs if the data path is too fast and the new data arrives before the old data has been properly captured
 
 #### Which cells are used?
@@ -180,53 +186,79 @@ The synthesis tool strategically selects cells based on the design's constraints
 
 This section outlines the basic command flow to synthesize a Verilog design into a gate-level netlist using Yosys. These commands are typically run inside the Yosys interactive shell.
 
-### Step 1: Load the Standard Cell Library
+### Step 1: Start yosys
+
+This command starts the yosys synthesizer.
+
+```tcl
+yosys
+```
+
+### Step 2: Load the Standard Cell Library
 
 This command reads the Liberty (.lib) file, which contains the definitions of all the standard cells the synthesizer can use to build the circuit.
 
 ```tcl
-yosys> read_liberty -lib <path_to_lib_file>
+yosys> read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 ```
 
-### Step 2: Read the Verilog Design
+### Step 3: Read the Verilog Design
 
 This command reads your RTL Verilog design file into the synthesis tool.
 
 ```tcl
-yosys> read_verilog mux_2_1.v
+yosys> read_verilog good_mux.v
 ```
 
-### Step 3: Run High-Level Synthesis
+### Step 4: Run High-Level Synthesis
 
 This is the main synthesis command. It converts the generic Verilog RTL into a circuit of generic logic components. You must specify the name of the top-level module in your design.
 
 ```tcl
-yosys> synth -top mux_2_1
+yosys> synth -top good_mux
 ```
 
-### Step 4: Map to the Technology Library
+### Step 5: Map to the Technology Library
 
 The `abc` command performs technology mapping. It takes the generic logic circuit from the previous step and maps it to the specific standard cells that were loaded from the .lib file.
 
 ```tcl
-yosys> abc -liberty <path_to_lib_file>
+yosys> abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 ```
 
-### Step 5: View the Synthesized Netlist
+### Step 6: View the Synthesized Netlist
 
-The `show` command generates a graphical representation of the gate-level netlist, allowing you to visualize the synthesized circuit.
+The `show` command generates a graphical representation of the gate-level netlist, allowing you to visualize the synthesized circuit. If multiple modules are present we need to mention the module which we want to look into.
 
 ```tcl
 yosys> show
 ```
 
-### Step 6: Write the Gate-Level Verilog
+### Step 7: Write the Gate-Level Verilog
 
 This command saves the final synthesized circuit as a new Verilog file. This gate-level netlist describes the design as an interconnection of standard cells and is the input for the next stage of the physical design process (place and route).
 
 ```tcl
-yosys> write_verilog -noattr mux_2_1_netlist.v
+yosys> write_verilog -noattr good_mux_netlist.v
 ```
+---
+## 6. Results of both labs
+
+`good_mux.v` gtkwave waveform:
+
+<img width="800" height="450" alt="good_mux_waveform" src="https://github.com/user-attachments/assets/49679926-ef4a-4230-8901-e1921bb0bcb1" />
+
+
+`good_mux.v` synthesized output:
+
+<img width="800" height="450" alt="show_good_mux" src="https://github.com/user-attachments/assets/0d74e63e-1bc7-4441-92aa-8b2176558759" />
+
+
+`good_mux_netlist` Netlist:
+
+<img width="800" height="450" alt="good_mux_netlist" src="https://github.com/user-attachments/assets/e1c12e44-e322-4f14-a01d-6261848f52c0" />
+
+### Note: The synthesized output from the workshop video and the result obtained is different due to the updation of the Yosys and the standard cell library.
 
 ---
 
@@ -238,9 +270,3 @@ This guide covered the essential workflow for Verilog RTL design and synthesis:
 2. **Simulation**: Using iverilog and gtkwave for functional verification
 3. **Synthesis**: Converting RTL to gate-level netlists using yosys
 4. **Technology Mapping**: Mapping to specific standard cell libraries
-
-The next steps in the digital design flow would typically include physical design (place and route), timing analysis, and final verification before tape-out.
-
----
-
-*This document is part of the SKY130 RTL Design and Synthesis Workshop series.*
