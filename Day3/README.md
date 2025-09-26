@@ -135,14 +135,19 @@ If the output of a flip-flop is not connected to any other logic (dangling/unloa
 
 **Example:**
 ```verilog
-// Original design
-reg unused_reg;
-always @(posedge clk) begin
-    unused_reg <= data;  // Output never used
+module counter_opt (input clk , input reset , output q);
+reg [2:0] count;
+assign q = count[0];
+
+always @(posedge clk ,posedge reset)
+begin
+	if(reset)
+		count <= 3'b000;
+	else
+		count <= count + 1;
 end
 
-// Optimized result: Entire flip-flop removed
-// (Nothing replaces it since output was unused)
+endmodule
 ```
 
 ### Advanced Optimizations
