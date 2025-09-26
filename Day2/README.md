@@ -101,6 +101,8 @@ Flatten synthesis is an approach where the tool first collapses the entire desig
 
 #### Yosys Command Flow (Flatten)
 
+The command `flatten` removes hierarchy from your design and converts it into a single module netlist.
+
 ```tcl
 read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
@@ -193,7 +195,8 @@ end
 
 ### Common Yosys Synthesis Commands for Flip-Flops
 
-The following sequence of commands is used to synthesize any of the flip-flop designs, map them to the library cells, and view the result.
+The following sequence of commands is used to synthesize any of the flip-flop designs, map them to the library cells, and view the result. The `dfflibmap` command maps flip-flops (like DFFs, latches) in your RTL design to the equivalent sequential cells from a given standard cell library (.lib file).
+Note: If the D-FF is not present in the existing library then we need to read the library in which D-FF is present.
 
 ```tcl
 yosys> read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
