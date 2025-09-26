@@ -6,7 +6,6 @@ Day 3 we focus on the intelligence of the synthesis tool. We'll explore how tool
 1. [Introduction to Logic Optimization](#1-introduction-to-logic-optimization)
 2. [Combinational Logic Optimization](#2-combinational-logic-optimization-)
 3. [Sequential Logic Optimization](#3-sequential-logic-optimization-)
-4. [Optimization Results Summary](#4-optimization-results-summary)
 
 ---
 
@@ -73,7 +72,7 @@ assign y= a?(b?c:(c?a:0)):c';
 
 By applying Boolean algebra, the synthesis tool can simplify this complex equation down to its most fundamental form:
 
-Y= a'c'+ac
+y = a'c'+ac
 
 This is the expression for an XNOR gate. The tool then replaces the entire complex chain of multiplexers with a single, highly optimized XNOR gate, leading to massive savings in area and a significant improvement in performance.
 
@@ -186,12 +185,26 @@ This is a **physical-aware optimization** used to fix timing issues caused by hi
 
 ### Sequential Optimization Examples
 
-| File | Original Logic | Expected Optimization | Result |
-|------|---------------|----------------------|--------|
-| `dff_const1.v` | D-flop with D='0' | Removed, output = tie-low | ✅ Constant propagation |
-| `dff_const2.v` | D-flop with D='1' | Removed, output = tie-high | ✅ Constant propagation |
-| `dff_const3.v` | D-flop with unused output | Completely removed | ✅ Dead code elimination |
-| `dff_const4.v` | Two identical D-flops | Merged into single flop | ✅ Resource sharing |
+| File | Original Logic | Expected Optimization | Result | 
+|--|----------|----------------------|---------|
+| `dff_const1.v` | D-flop with D='1' and async reset | No optimization | <img width="610" height="309" alt="dff_const1_show_crop" src="https://github.com/user-attachments/assets/d815d617-d98b-4a0d-9e52-cbd4d350af84" />|
+| `dff_const2.v` | D-flop with D='1' and async set | Constant value 1 | <img width="596" height="390" alt="dff_const2_show_crop" src="https://github.com/user-attachments/assets/b86d8147-8cfe-4350-8bb9-de4f2be27a28" />|
+| `dff_const3.v` | 2 D-FF's with first FF having D = '1' (async reset) and second FF D pin connected to the first FF's Q pin (async set) | No optimization |<img width="672" height="102" alt="dff_const3_show_crop" src="https://github.com/user-attachments/assets/f6c70d15-98fa-4fd5-abb8-4c5c976686ec" />|
+| `dff_const4.v` | 2 D-FF's (async set) with first FF having D = '1' and second FF D pin connected to the first FF's Q pin  | Constant value 1 | <img width="593" height="389" alt="dff_const4_show_crop" src="https://github.com/user-attachments/assets/a7ffbf6f-f152-4c49-8306-ba2f01a18c25" />|
+| `dff_const5.v` | 2 D-FF's (async reset) with first FF having D = '1' and second FF D pin connected to the first FF's Q pin  | No optimization | <img width="668" height="301" alt="dff_const5_show_crop" src="https://github.com/user-attachments/assets/f60e2936-fa2e-4ca4-bc75-fe3c19f9d1eb" />|
+| `counter_opt.v` | A counter with output as count[0] | Unused output optimization| <img width="1194" height="157" alt="counter_opt_show_crop" src="https://github.com/user-attachments/assets/d966d0a2-9531-43c7-b5ee-5150dd58111c" />
+|
+
+### Examples (synthesis and waveform)
+
+| File | Synthesis | Waveform | 
+|--|----------|----------------------|
+| `dff_const1.v` | <img width="610" height="309" alt="dff_const1_show_crop" src="https://github.com/user-attachments/assets/d815d617-d98b-4a0d-9e52-cbd4d350af84" />| <img width="1285" height="868" alt="dff_const1_waveform" src="https://github.com/user-attachments/assets/3df168b7-b885-4878-a370-02c27e3abd65" />|
+| `dff_const2.v` | <img width="596" height="390" alt="dff_const2_show_crop" src="https://github.com/user-attachments/assets/b86d8147-8cfe-4350-8bb9-de4f2be27a28" />| <img width="1285" height="859" alt="dff_const2_wf" src="https://github.com/user-attachments/assets/412d1967-ba4d-4740-89c0-ae47d3124c64" />|
+| `dff_const3.v` | <img width="672" height="102" alt="dff_const3_show_crop" src="https://github.com/user-attachments/assets/f6c70d15-98fa-4fd5-abb8-4c5c976686ec" />| <img width="1283" height="866" alt="dff_const3_wf" src="https://github.com/user-attachments/assets/bfd24d1a-ace8-4df5-927e-d75c5e42a820" />|
+| `dff_const4.v` | <img width="593" height="389" alt="dff_const4_show_crop" src="https://github.com/user-attachments/assets/a7ffbf6f-f152-4c49-8306-ba2f01a18c25" />| <img width="1346" height="826" alt="dff_const4_wf" src="https://github.com/user-attachments/assets/d9067217-ddea-4f10-a852-a8679a1e432c" />|
+| `dff_const5.v` | <img width="668" height="301" alt="dff_const5_show_crop" src="https://github.com/user-attachments/assets/f60e2936-fa2e-4ca4-bc75-fe3c19f9d1eb" />| <img width="1292" height="730" alt="dff_const5_wf" src="https://github.com/user-attachments/assets/b44af497-d003-44b1-837b-a180b073c043" />|
+| `counter_opt.v` | <img width="1194" height="157" alt="counter_opt_show_crop" src="https://github.com/user-attachments/assets/13e598d0-e9da-4966-934b-be1e43bcdb6a" />| <img width="1287" height="736" alt="counter_opt_wf" src="https://github.com/user-attachments/assets/27978d7b-4dfc-403d-96de-e7fd88743e7f" />|
 
 ### Yosys Commands for Sequential Optimization
 
@@ -214,51 +227,6 @@ yosys> abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # View results
 yosys> show
-yosys> stat
-```
-
----
-
-## 4. Optimization Results Summary
-
-### Impact of Optimizations
-
-| Optimization Type | Area Savings | Power Savings | Performance Impact |
-|------------------|--------------|---------------|--------------------|
-| **Constant Propagation** | High | High | Positive |
-| **Boolean Simplification** | Medium | Medium | Positive |
-| **Sequential Constant** | Very High | Very High | Positive |
-| **Unused Logic Removal** | High | High | Neutral |
-| **State Optimization** | Medium | Medium | Positive |
-| **Retiming** | Neutral | Neutral | Very Positive |
-
-### Key Optimization Principles
-
-1. **Equivalence Preservation**: All optimizations maintain functional equivalence
-2. **PPA Trade-offs**: Optimizations typically improve all three metrics
-3. **Hierarchical Awareness**: Some optimizations work better with flattened designs
-4. **Physical Awareness**: Advanced optimizations consider chip layout
-5. **Tool Intelligence**: Modern synthesis tools automatically apply most optimizations
-
-### Best Practices for Optimization-Friendly Code
-
-```verilog
-// ✅ Good: Clear, simple logic
-assign result = enable ? data : 1'b0;
-
-// ❌ Avoid: Unnecessarily complex expressions  
-assign result = (enable & data) | (~enable & 1'b0);
-
-// ✅ Good: Explicit constants
-parameter RESET_VALUE = 8'h00;
-
-// ✅ Good: Proper reset handling
-always @(posedge clk or posedge reset) begin
-    if (reset)
-        q <= RESET_VALUE;
-    else
-        q <= d;
-end
 ```
 
 ---
