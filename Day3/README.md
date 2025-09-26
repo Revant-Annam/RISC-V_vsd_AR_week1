@@ -55,7 +55,7 @@ For example,
 
 As a result, the tool replaces the original AND and NOR gates with a single, much more efficient NOT gate (inverter).
 
-**Common Constant Propagation Rules:**
+**Boolean Algebra:**
 - `A & 0 = 0` (AND with 0 always produces 0)
 - `A | 1 = 1` (OR with 1 always produces 1)
 - `A & 1 = A` (AND with 1 passes the signal through)
@@ -81,11 +81,12 @@ This is the expression for an XNOR gate. The tool then replaces the entire compl
 
 | File | Original Logic | Expected Optimization | Result |
 |------|---------------|----------------------|--------|
-| `opt_check1.v` | Logic with constant '0' input | Gate eliminated, output tied to constant | ✅ Optimized |
-| `opt_check2.v` | Logic with constant '1' input | `A & 1` becomes `A` | ✅ Simplified |
-| `opt_check3.v` | `(A & B) \| (A & ~B)` | Simplified to `A` | ✅ Boolean identity applied |
-| `opt_check4.v` | Complex Boolean expression | Reduced to XNOR gate | ✅ Optimal form achieved |
-| `multiple_module_opt.v` | Cross-module optimization | Optimization across boundaries | ✅ Flattened and optimized |
+| `opt_check1.v` | y = a?b:0; | Reduced to `and` gate with 2 inputs| <img width="595" height="139" alt="opt_check_show_cropped" src="https://github.com/user-attachments/assets/ff2ca467-1aba-4b99-9054-2224739e22d6" />|
+| `opt_check2.v` | y = a?1:b; | Reduced to `or` gate with 2 inputs | <img width="595" height="139" alt="opt_check2_show_crop" src="https://github.com/user-attachments/assets/23f0dc8f-b50a-459c-881d-37aa19eaf0b3" />|
+| `opt_check3.v` | y = a?(c?b:0):0; | Reduced to `and` gate with 3 inputs | <img width="595" height="139" alt="opt_check3_show_crop" src="https://github.com/user-attachments/assets/aeae07c1-8cd7-487d-9e79-9328c563d7fe" />|
+| `opt_check4.v` | y = a?(b?(a&c):c):c'; | Reduced to `xnor` gate | <img width="595" height="139" alt="opt_check4_show" src="https://github.com/user-attachments/assets/513b8f0c-62b3-43a9-a110-3a4bf037f821" />|
+| `multiple_module_opt.v` | y = c or (b&a); (multiple modules) | `and` gate & `or` gate  |<img width="590" height="296" alt="multi_mod_flat_opt_show_crop" src="https://github.com/user-attachments/assets/fd8731ab-cefc-4e16-aef3-e536c682a05e" />|
+| `multiple_module_opt.v` | y = 0&a&b&c&d (multiple modules) | Constant value of 0 | <img width="405" height="548" alt="multi_mod_opt2_show_crop" src="https://github.com/user-attachments/assets/8be43991-9798-4698-b146-6b3bfb90375b" />|
 
 ### Yosys Commands for Combinational Optimization
 
@@ -105,7 +106,6 @@ yosys> abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # View results
 yosys> show
-yosys> stat
 ```
 
 ---
@@ -120,25 +120,14 @@ These fundamental optimizations target and remove redundant flip-flops from the 
 
 #### Sequential Constant Propagation
 
-This simplifies logic when a flip-flop's input is tied to a constant value ('1' or '0'). The tool can often eliminate the flip-flop and its downstream logic entirely.
+This optimization simplifies logic when a flip-flop's input is tied to a constant value ('1' or '0'). The tool can often eliminate the flip-flop and its downstream logic entirely.
 
-**Example:**
-```verilog
-// Original design
-always @(posedge clk) begin
-    q <= 1'b0;  // D input always 0
-end
+In the example shown, a D-flip-flop's D input is tied to 0 and active high reset.
+  1. After the first clock cycle, when reset is low, the flop's output Q will be 0.
+  2. After few clock cycles when the reset is high then Q will be 0.
+  3. The value of Q doesnot change so it can be replaced by Q=0.
 
-// Optimized result: 
-// Flip-flop removed, q replaced with tie-low cell (ground connection)
-assign q = 1'b0;
-```
-
-**Process:**
-1. **Identify constant input** to flip-flop
-2. **Propagate constant** through downstream logic
-3. **Eliminate redundant** flip-flop and logic
-4. **Replace with direct** constant connection
+The synthesis tool recognizes that the output Y will always be 0. It optimizes the circuit by removing the flip-flop, replacing them with a single constant 0 cell.
 
 #### Unused Output Optimization
 
