@@ -6,7 +6,8 @@ On Day 2, we dive deeper into the synthesis process by understanding the critica
 1. [Timing Libraries](#1-timing-libraries)
 2. [Hierarchical vs. Flatten Synthesis](#2-hierarchical-vs-flatten-synthesis)
 3. [Different Coding Styles for Flip-Flops](#3-different-coding-styles-for-flip-flops)
-4. [Results](#4-results)
+4. [Special Optimizations](#4-special-optimizations)
+5. [Results](#5-results)
 
 ---
 
@@ -213,8 +214,81 @@ yosys> show
 ```
 
 ---
+## 4. Special Optimizations 
 
-## 4. Results
+Modern synthesis tools like yosys are intelligent and can recognize certain arithmetic operations, automatically converting them into simpler, more efficient hardware.
+
+### Multiplication by Powers of 2
+
+When a synthesis tool encounters a multiplication by a power of two (like 2, 4, 8, etc.), it doesn't build a full multiplier. Instead, it implements the operation as a simple **bit-shift**.
+
+**Examples:**
+- `y = a * 2;` synthesizes to `y = a << 1;` (left shift by 1)
+- `y = a * 4;` synthesizes to `y = a << 2;` (left shift by 2)
+
+**Why this works:** Shifting left by `n` bits is equivalent to multiplying by 2^n. This is implemented using simple wire connections with zero hardware cost.
+
+### Multiplication by Other Constants
+
+This optimization extends to numbers that aren't powers of two. The tool breaks the multiplication down into a series of shifts and adds. For example, consider multiplying by 9:
+
+**The Math:** `a * 9` is the same as `a * (8 + 1)`, which equals `(a * 8) + a`
+
+**The Hardware:** The synthesis tool implements this by:
+1. Left-shifting `a` by 3 bits (`a << 3` to get `a * 8`)
+2. Using a simple adder to add the original number `a` to the result
+
+This approach uses only an adder and wire connections instead of a full multiplier, resulting in significant area and power savings.
+
+### Synthesis Output Examples
+
+Here's how these optimizations look in practice:
+
+#### Multiplication by 2 (mul2)
+
+**Original Verilog Code:**
+```verilog
+module mul2 (input [2:0] a, output [3:0] y);
+    assign y = a * 2;
+endmodule
+```
+
+**Synthesized Netlist (mul2_netlist):**
+
+```verilog
+module mul2(a, y);
+  input [2:0] a;
+  output [3:0] y;
+  wire [2:0] a;
+  wire [3:0] y;
+  assign y = { a, 1'h0 };
+endmodule
+```
+
+#### Multiplication by 9 (mult8)
+
+**Original Verilog Code:**
+```verilog
+module mult8 (input [2:0] a, output [5:0] y);
+    assign y = a * 9;
+endmodule
+```
+
+**Synthesized Netlist (mult8_netlist):**
+
+```verilog
+module mult8(a, y);
+  input [2:0] a;
+  output [5:0] y;
+  wire [2:0] a;
+  wire [5:0] y;
+  assign y = { a, a };
+endmodule
+```
+
+---
+
+## 5. Results
 
 ### Synthesis Netlists 📜
 
@@ -257,7 +331,21 @@ The flatten netlist merges all logic into a single module. The original module b
 - The reset signal is fed into **combinational logic (e.g., a multiplexer)** that precedes the D input of the flip-flop
 - Reset functionality implemented in combinational logic rather than using dedicated hardware pins
 
-<img width="1281" height="868" alt="show_dff_syncres" src="https://github.com/user-attachments/assets/d9713fac-9b65-4d04-b5ec-f244d11fe98e" />
+<img width="800" height="450" alt="show_dff_syncres" src="https://github.com/user-attachments/assets/d9713fac-9b65-4d04-b5ec-f244d11fe98e" />
+
+
+### Synthesized Optimized Multiplier circuits 🔬
+
+#### Multiplication by 2
+- The synthesized output is taking the input as the outputs top bits.
+
+<img width="800" height="450" alt="show_mul2" src="https://github.com/user-attachments/assets/1b529235-317f-4289-a241-a6901091f613" />
+
+
+#### Multiplication by 8
+- The synthesized output is just concatinating the input, `{a,a}`.
+
+<img width="800" height="450" alt="mult8_show" src="https://github.com/user-attachments/assets/8986f739-4540-4617-9348-d880a8e069c9" />
 
 
 ---
