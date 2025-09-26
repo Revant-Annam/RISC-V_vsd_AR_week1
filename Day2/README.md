@@ -80,6 +80,11 @@ abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 write_verilog -noattr multiple_modules_hier_netlist.v
 ```
 
+Example:
+
+<img width="800" height="450" alt="show_multi_mod" src="https://github.com/user-attachments/assets/112b1b9c-4369-4a74-b5cf-0d03f866c172" />
+
+
 ### Flatten Synthesis
 
 Flatten synthesis is an approach where the tool first collapses the entire design hierarchy, merging all sub-modules into a single, large module.
@@ -109,6 +114,10 @@ abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 write_verilog -noattr multiple_modules_flat_netlist.v
 ```
+Example:
+
+<img width="800" height="450" alt="show_multi_mod_flat" src="https://github.com/user-attachments/assets/ab264664-1a2b-45c0-a8a7-0d038f42fff2" />
+
 
 ---
 
@@ -159,9 +168,9 @@ end
 An asynchronous set forces the flop's output to '1' **immediately**, regardless of the clock.
 
 ```verilog
-always @(posedge clk or posedge set)
+always @(posedge clk or posedge async_set)
 begin
-    if (set)
+    if (async_set)
         q <= 1'b1;  // Set takes immediate effect
     else
         q <= d;     // Normal operation
@@ -173,9 +182,9 @@ end
 A synchronous set forces the flop's output to '1' only on the **next active clock edge**.
 
 ```verilog
-always @ (posedge clk , posedge async_set)
+always @ (posedge clk)
 begin
-	if(async_set)
+	if(sync_set)
 		q <= 1'b1;
 	else	
 		q <= d;
@@ -207,40 +216,46 @@ yosys> show
 ### Synthesis Netlists 📜
 
 #### Hierarchical Netlist
-The hierarchical netlist preserves the design's modularity. You can clearly see the instances of sub-modules being connected, making it easier to:
-- Debug issues by tracing through module boundaries
-- Understand the original design intent
-- Perform incremental changes
+The hierarchical netlist preserves the design's modularity. You can clearly see the instances of sub-modules being connected:
+<img width="800" height="450" alt="multi_mod_hier" src="https://github.com/user-attachments/assets/06a76c66-1881-447c-a580-84f14a7f185b" />
+
 
 #### Flatten Netlist  
-The flatten netlist merges all logic into a single module. The original module boundaries are gone, replaced by a "flat" sea of logic gates, which:
-- Enables better global optimization
-- Reduces hierarchical overhead
-- Makes the design harder to debug
+The flatten netlist merges all logic into a single module. The original module boundaries are gone, replaced by a "flat" sea of logic gates:
+<img width="800" height="450" alt="multi_mod_flat" src="https://github.com/user-attachments/assets/bd97dd14-907f-4220-85fb-e6f39232897b" />
+
 
 ### Waveform Analysis 📉
 
 #### Asynchronous Reset Behavior
 - **Output `q` goes to 0 instantly** when reset becomes active
 - Reset effect is independent of clock edge
-- Immediate response but potential for metastability
+
+<img width="800" height="450" alt="waveform_dff_async_res" src="https://github.com/user-attachments/assets/0b2b2665-da5a-4c86-a1fb-c1e9e26742c1" />
+
 
 #### Synchronous Reset Behavior  
 - **Output `q` waits for the next rising clock edge** after reset becomes active before it goes to 0
 - Reset effect synchronized with clock
-- Eliminates metastability but adds latency
+
+<img width="800" height="450" alt="waveform_dff_sync_res" src="https://github.com/user-attachments/assets/080a9bf8-6da7-4f7d-8e89-e81d12e8c2ee" />
+
 
 ### Synthesized Flip-Flop Circuits 🔬
 
 #### Asynchronous Reset Synthesis
 - The reset signal is connected **directly to the dedicated asynchronous clear (CLR) pin** of the library's D-flip-flop cell
-- No additional combinational logic required
 - Hardware reset capability utilized
+
+<img width="800" height="450" alt="show_dff_asyncres" src="https://github.com/user-attachments/assets/3072e033-8c19-467d-b2eb-1006528460bd" />
+
 
 #### Synchronous Reset Synthesis
 - The reset signal is fed into **combinational logic (e.g., a multiplexer)** that precedes the D input of the flip-flop
-- Additional logic gates required for implementation
 - Reset functionality implemented in combinational logic rather than using dedicated hardware pins
+
+<img width="1281" height="868" alt="show_dff_syncres" src="https://github.com/user-attachments/assets/d9713fac-9b65-4d04-b5ec-f244d11fe98e" />
+
 
 ---
 
