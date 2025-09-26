@@ -222,15 +222,11 @@ This section compares RTL simulation waveforms with GLS waveforms, highlighting 
 
 ### Detailed Analysis
 
-#### Test Case 1: `correct_mux.v` ✅
+#### Test Case 1: `ternary_operator_mux.v` ✅
 ```verilog
-// Properly coded 2:1 MUX
-always @(*) begin           // Complete sensitivity list
-    if (sel)
-        y = a;              // Blocking for combinational
-    else
-        y = b;
-end
+module ternary_operator_mux (input i0 , input i1 , input sel , output y);
+	assign y = sel?i1:i0;
+endmodule
 ```
 
 **Result**: 
@@ -238,15 +234,17 @@ end
 - **GLS Simulation**: Identical waveform  
 - **Conclusion**: Synthesis successful, no mismatch
 
-#### Test Case 2: `sens_list_mux.v` ⚠️
+#### Test Case 2: `bad_mux.v` ⚠️
 ```verilog
-// MUX with incomplete sensitivity list
-always @(sel) begin         // Missing 'a' and 'b' in sensitivity
-    if (sel)
-        y = a;
-    else
-        y = b;
+module bad_mux (input i0 , input i1 , input sel , output reg y);
+always @ (sel)
+begin
+	if(sel)
+		y <= i1;
+	else 
+		y <= i0;
 end
+endmodule
 ```
 
 **Result**:
@@ -254,44 +252,22 @@ end
 - **GLS Simulation**: Proper MUX behavior (synthesis inferred correct logic)
 - **Conclusion**: Dangerous mismatch - RTL sim passes but behaves differently than hardware
 
-#### Test Case 3: `blocking_ff.v` ⚠️  
+#### Test Case 3: `blocking_caveat.v` ⚠️  
 ```verilog
-// Shift register using blocking assignments
-always @(posedge clk) begin
-    q1 = d;                 // Blocking in sequential logic
-    q2 = q1;                // Gets new value immediately
+module blocking_caveat (input a , input b , input  c, output reg d); 
+reg x;
+always @ (*)
+begin
+	d = x & c;
+	x = a | b;
 end
+endmodule
 ```
 
 **Result**:
-- **RTL Simulation**: Behaves like buffer (`q1 = q2 = d`)
-- **GLS Simulation**: Proper shift register behavior
+- **RTL Simulation**: Creates an unintended latch
+- **GLS Simulation**: Proper combinational logic (a|b&c)
 - **Conclusion**: Mismatch due to incorrect assignment type
-
-### Waveform Comparison Example
-
-```
-Time:     0ns   5ns   10ns  15ns  20ns
-        ┌─────┬─────┬─────┬─────┬─────┐
-d       │  0  │  1  │  0  │  1  │  0  │
-        └─────┴─────┴─────┴─────┴─────┘
-
-RTL Simulation (blocking_ff.v - WRONG):
-        ┌─────┬─────┬─────┬─────┬─────┐
-q1      │  0  │  1  │  0  │  1  │  0  │  ← Same as d
-        └─────┴─────┴─────┴─────┴─────┘
-        ┌─────┬─────┬─────┬─────┬─────┐
-q2      │  0  │  1  │  0  │  1  │  0  │  ← Same as d (buffer)
-        └─────┴─────┴─────┴─────┴─────┘
-
-GLS Simulation (synthesized netlist - CORRECT):
-        ┌─────┬─────┬─────┬─────┬─────┐
-q1      │  0  │  1  │  0  │  1  │  0  │  ← Same as d
-        └─────┴─────┴─────┴─────┴─────┘
-        ┌─────┬─────┬─────┬─────┬─────┐
-q2      │  0  │  0  │  1  │  0  │  1  │  ← Delayed by 1 clock (shift register)
-        └─────┴─────┴─────┴─────┴─────┘
-```
 
 ---
 
@@ -301,7 +277,6 @@ q2      │  0  │  0  │  1  │  0  │  1  │  ← Delayed by 1 clock (shi
 
 1. **Always use GLS** to verify synthesized netlists
 2. **Sequential logic**: Use non-blocking assignments (`<=`)
-3. **Combinational logic**: Use blocking assignments (`=`)
 4. **Sensitivity lists**: Always use `always @(*)` for combinational logic
 5. **Verify early and often**: Don't wait until tape-out to run GLS
 
@@ -310,7 +285,6 @@ q2      │  0  │  0  │  1  │  0  │  1  │  ← Delayed by 1 clock (shi
 #### ✅ DO:
 - Use `always @(*)` for all combinational logic
 - Use non-blocking assignments in clocked always blocks
-- Use blocking assignments in combinational always blocks
 - Run GLS on all synthesized designs
 - Compare RTL and GLS waveforms
 
@@ -321,26 +295,5 @@ q2      │  0  │  0  │  1  │  0  │  1  │  ← Delayed by 1 clock (shi
 - Use delays in synthesizable code
 - Use initial blocks in synthesizable modules
 
-### Debugging Mismatch Workflow
-
-```
-1. Identify mismatch in GLS
-        ↓
-2. Check sensitivity lists
-        ↓
-3. Verify blocking/non-blocking usage
-        ↓
-4. Review synthesis warnings
-        ↓
-5. Fix RTL code
-        ↓
-6. Re-run RTL simulation
-        ↓
-7. Re-synthesize
-        ↓
-8. Re-run GLS
-        ↓
-9. Verify waveforms match
-```
 
 Understanding these concepts is crucial for creating reliable digital designs that work correctly in silicon. Proper use of blocking/non-blocking assignments and thorough GLS verification are essential skills for any digital design engineer.
