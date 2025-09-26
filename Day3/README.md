@@ -1,6 +1,6 @@
 # Day 3: Combinational and Sequential Optimizations
 
-Day 3 focuses on the "intelligence" of the synthesis tool. We'll explore how tools like Yosys automatically transform our initial Verilog code into a gate-level netlist that is significantly more efficient in terms of performance, power, and area (PPA).
+Day 3 we focus on the intelligence of the synthesis tool. We'll explore how tools like Yosys automatically transform our initial Verilog code into a gate-level netlist that is significantly more efficient in terms of performance, power, and area (PPA).
 
 ## Table of Contents
 1. [Introduction to Logic Optimization](#1-introduction-to-logic-optimization)
@@ -34,26 +34,26 @@ The definition of "better" depends on the design goals, which are typically a tr
 - **Method**: Reduce total number and size of logic gates
 - **Impact**: Lower manufacturing cost, higher chip density
 
-> **Note:** Logic optimization is a core function of the synthesis process and is performed by tools like Yosys and ABC.
+> **Note:** Logic optimization is a core function of the synthesis process and is performed by `abc` command in the Yosys.
 
 ---
 
 ## 2. Combinational Logic Optimization 🔄
 
-Combinational logic optimization is the process of "squeezing" the logic between registers to create the most efficient design, resulting in significant area and power savings. The two primary techniques used by synthesis tools are:
+Combinational logic optimization is the process of optimizing the logic between registers to create the most efficient design, resulting in significant area and power savings. The two primary techniques used by synthesis tools are:
 
 ### Constant Propagation
 
-This technique involves simplifying logic when one or more inputs to a circuit are constant (always '1' or '0'). The synthesis tool propagates these constant values through the logic, eliminating redundant gates.
+This technique involves simplifying logic if one or more inputs to a circuit are constant (i.e., always '1' or '0'). The synthesis tool propagates these constant values through the logic, eliminating redundant gates.
 
-**Example:**
-```verilog
-// Original logic
-assign y = a & 1'b0;  // AND gate with constant 0
+For example, 
+- Consider the circuit below with the expression Y=((A⋅B)+C')
+- If the tool knows that input A is always tied to 0, the logic simplifies as follows:
+  1. The output of the AND gate, (A⋅B), becomes (0⋅B), which is always 0.
+  2. The entire expression becomes Y=(0+C')
+  3. This simplifies to Y=C' 
 
-// Optimized result
-assign y = 1'b0;      // Direct connection to ground
-```
+As a result, the tool replaces the original AND and NOR gates with a single, much more efficient NOT gate (inverter).
 
 **Common Constant Propagation Rules:**
 - `A & 0 = 0` (AND with 0 always produces 0)
@@ -65,20 +65,17 @@ assign y = 1'b0;      // Direct connection to ground
 
 This is a more powerful technique where the synthesis tool applies the rules of Boolean algebra to transform a complex logic expression into a simpler, functionally equivalent one.
 
-**Example:**
+Consider a complex Verilog expression that synthesizes to a chain of multiplexers. Through analysis, the tool can derive the full Boolean expression for the output.
+For the expression shown, the tool derives:
 ```verilog
-// Original complex logic
-assign y = (a & b) | (a & ~b);
-
-// Optimized using Boolean algebra: (a & b) | (a & ~b) = a & (b | ~b) = a & 1 = a
-assign y = a;
+assign y= a?(b?c:(c?a:0)):c';
 ```
 
-**Common Boolean Optimizations:**
-- **Absorption**: `A | (A & B) = A`
-- **Distribution**: `A & (B | C) = (A & B) | (A & C)`
-- **De Morgan's**: `~(A & B) = ~A | ~B`
-- **Identity**: `A | ~A = 1`, `A & ~A = 0`
+By applying Boolean algebra, the synthesis tool can simplify this complex equation down to its most fundamental form:
+
+Y= a'c'+ac
+
+This is the expression for an XNOR gate. The tool then replaces the entire complex chain of multiplexers with a single, highly optimized XNOR gate, leading to massive savings in area and a significant improvement in performance.
 
 ### Combinational Optimization Examples
 
