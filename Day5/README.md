@@ -322,7 +322,7 @@ end
 end
 endmodule
 ```
-**Synthesis:** The synthesis output for a MUX using for loop. The latch is generated as there is no default value for the output y. We can add a default value for the y before the for loop to remove the unintended latch.
+**Synthesis:** The synthesis output for a MUX using for loop. The latch is generated as there is no default value for the output y. We can add a default value for the y before the for loop to remove the unintended latch. 
 
 <img width="1283" height="725" alt="mux_gen_show" src="https://github.com/user-attachments/assets/5f7ad10f-608a-4198-86bb-a2c22b262008" />
 
@@ -334,8 +334,9 @@ endmodule
 
 Netlist waveform:
 
+<img width="1279" height="724" alt="mux_gen_net_wf" src="https://github.com/user-attachments/assets/39fe909a-d379-490f-819a-656d747a3738" />
 
-
+Note: The waveform of the RTL simulation and the netlist is same as the Latch is always `enable` is 0.
 
 ---
 
@@ -347,33 +348,24 @@ Netlist waveform:
 
 The `generate-for` loop is the primary tool for creating repetitive structures.
 
-**Example: 32-bit Ripple Carry Adder**
+**Example: 8-bit Ripple Carry Adder**
 ```verilog
-module ripple_carry_adder_32bit (
-    input [31:0] a, b,
-    input cin,
-    output [31:0] sum,
-    output cout
-);
-
-wire [32:0] carry;
-assign carry[0] = cin;
+module rca (input [7:0] num1 , input [7:0] num2 , output [8:0] sum);
+wire [7:0] int_sum;
+wire [7:0]int_co;
 
 genvar i;
 generate
-    for (i = 0; i < 32; i = i + 1) begin : adder_stage
-        full_adder fa (
-            .a(a[i]),
-            .b(b[i]), 
-            .cin(carry[i]),
-            .sum(sum[i]),
-            .cout(carry[i+1])
-        );
-    end
+	for (i = 1 ; i < 8; i=i+1) begin
+		fa u_fa_1 (.a(num1[i]),.b(num2[i]),.c(int_co[i-1]),.co(int_co[i]),.sum(int_sum[i]));
+	end
+
 endgenerate
+fa u_fa_0 (.a(num1[0]),.b(num2[0]),.c(1'b0),.co(int_co[0]),.sum(int_sum[0]));
 
-assign cout = carry[32];
 
+assign sum[7:0] = int_sum;
+assign sum[8] = int_co[7];
 endmodule
 ```
 **Synthesized output:**  Ripple Carry Adder
@@ -385,7 +377,7 @@ endmodule
 <img width="1282" height="732" alt="rca_wf" src="https://github.com/user-attachments/assets/c158ab80-dfb8-4270-97a0-50d9896c24b3" />
 
 
-**Result:** 32 individual full_adder module instances are created.
+**Result:** 8 individual full_adder module instances are created.
 
 
 ### `for` vs. `generate-for`: Critical Distinction
