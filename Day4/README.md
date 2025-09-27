@@ -248,7 +248,7 @@ endmodule
 ```
 
 **Result**:
-- **RTL Simulation**: Output doesn't change when `a` or `b` change (wrong!)
+- **RTL Simulation**: Output doesn't change when `i0` or `i1` change (wrong!)
 - **GLS Simulation**: Proper MUX behavior (synthesis inferred correct logic)
 - **Conclusion**: Dangerous mismatch - RTL sim passes but behaves differently than hardware
 
@@ -267,7 +267,7 @@ endmodule
 **Result**:
 - **RTL Simulation**: Creates an unintended latch
 - **GLS Simulation**: Proper combinational logic (a|b&c)
-- **Conclusion**: Mismatch due to incorrect assignment type
+- **Conclusion**: Mismatch due to incorrect assignment order
 
 ---
 
